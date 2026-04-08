@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オセロゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'ヒラギノ角ゴ Pro', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .info-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .info-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .info-box p {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            color: #1976d2;
+            min-height: 25px;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-gap: 1px;
+            background: #228B22;
+            padding: 5px;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #1a7a1a;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+            padding: 0 !important;
+            margin: 0 !important;
+            min-width: auto;
+        }
+
+        .cell:hover:not(:disabled) {
+            background: #0d5a0d;
+            transform: scale(1.05);
+        }
+
+        .cell:disabled {
+            cursor: not-allowed;
+        }
+
+        .piece {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .piece.black {
+            background: #000;
+        }
+
+        .piece.white {
+            background: #fff;
+            color: #000;
+        }
+
+        .piece.hint {
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 215, 0, 0.6);
+            box-shadow: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #efefef;
+            border-color: #999;
+        }
+
+        .difficulty {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .difficulty label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .difficulty input {
+            cursor: pointer;
+        }
+
+        .game-over {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .game-over h2 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .game-over p {
+            color: #856404;
+            font-size: 1.1em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .ai-log-panel {
+            background: #f9f9f9;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .ai-log-panel h3 {
+            color: #667eea;
+            font-size: 1em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-log-entry {
+            background: white;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #764ba2;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .ai-log-entry.thinking {
+            border-left-color: #ffb300;
+            background: #fffbf0;
+        }
+
+        .ai-log-entry.decision {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+            font-weight: bold;
+        }
+
+        .log-position {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .log-score {
+            color: #764ba2;
+            font-weight: bold;
+        }
+
+        .log-clear-btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 8px;
+            background: #e0e0e0;
+            border: 1px solid #999;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .log-clear-btn:hover {
+            background: #d0d0d0;
+        }
+
+        @media (max-width: 500px) {
+            .board {
+                grid-template-columns: repeat(8, 40px);
+                grid-gap: 0;
+                padding: 3px;
+            }
+
+            .cell {
+                width: 40px;
+                height: 40px;
+            }
+
+            .piece {
+                width: 32px;
+                height: 32px;
+                font-size: 0.8em;
+            }
+
+            .piece.hint {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 オセロゲーム</h1>
+
+        <div class="difficulty">
+            <label>
+                <input type="radio" name="difficulty" value="easy" checked>
+                初級
+            </label>
+            <label>
+                <input type="radio" name="difficulty" value="normal">
+                中級
+            </label>
+            <label>
+                <input type="radio" name="difficulty" value="hard">
+                上級
+            </label>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="startNewGame()">新しいゲーム</button>
+            <button class="btn-secondary" onclick="undo()">戻る</button>
+            <button class="btn-secondary" onclick="pass()">パス</button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="info-panel">
+            <div class="info-box">
+                <h3>黒 (あなた)</h3>
+                <p id="blackScore">2</p>
+            </div>
+            <div class="info-box">
+                <h3>白 (AI)</h3>
+                <p id="whiteScore">2</p>
+            </div>
+            <div class="info-box">
+                <h3>空きマス</h3>
+                <p id="emptyCount">60</p>
+            </div>
+        </div>
+
+        <div id="gameOverPanel" class="game-over" style="display: none;">
+            <h2 id="winnerText"></h2>
+            <p id="finalScore"></p>
+            <div class="stats" id="stats"></div>
+        </div>
+
+        <div class="board-container">
+            <div class="board" id="board"></div>
+        </div>
+
+        <div class="ai-log-panel">
+            <h3>🤖 AI思考ログ</h3>
+            <div id="aiLog"></div>
+            <button class="log-clear-btn" onclick="clearAILog()">ログをクリア</button>
+        </div>
+
+    <script>
+        const EMPTY = 0;
+        const BLACK = 1;  // プレイヤー
+        const WHITE = 2;  // AI
+
+        let board = [];
+        let currentPlayer = BLACK;
+        let gameOver = false;
+        let gameHistory = [];
+        let difficulty = 'normal';
+        let aiLog = [];  // AI思考ログ
+
+        // ボード初期化
+        function initBoard() {
+            board = Array(64).fill(EMPTY);
+            board[27] = WHITE;  // d4
+            board[28] = BLACK;  // e4
+            board[35] = BLACK;  // d5
+            board[36] = WHITE;  // e5
+            currentPlayer = BLACK;
+            gameOver = false;
+            gameHistory = [];
+            aiLog = [];
+        }
+
+        // AI思考ログを追加
+        function addAILog(message, type = 'thinking') {
+            const timestamp = new Date().toLocaleTimeString('ja-JP');
+            aiLog.push({ message, type, timestamp });
+            
+            // ログを画面に表示
+            const logElement = document.getElementById('aiLog');
+            const entry = document.createElement('div');
+            entry.className = `ai-log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(entry);
+            
+            // スクロール位置を下に
+            logElement.parentElement.scrollTop = logElement.parentElement.scrollHeight;
+        }
+
+        // ログをクリア
+        function clearAILog() {
+            aiLog = [];
+            document.getElementById('aiLog').innerHTML = '';
+        }
+
+        // ボードのインデックスをx,yに変換
+        function getCoords(index) {
+            return [index % 8, Math.floor(index / 8)];
+        }
+
+        // x,yをインデックスに変換
+        function getIndex(x, y) {
+            return y * 8 + x;
+        }
+
+        // ボードが有効な位置か確認
+        function isValidPos(x, y) {
+            return x >= 0 && x < 8 && y >= 0 && y < 8;
+        }
+
+        // 方向（8方向）
+        const directions = [
+            [-1, -1], [0, -1], [1, -1],
+            [-1, 0],           [1, 0],
+            [-1, 1],  [0, 1],  [1, 1]
+        ];
+
+        // 置ける位置を調べる
+        function canPlaceAt(x, y, player) {
+            if (!isValidPos(x, y) || board[getIndex(x, y)] !== EMPTY) return false;
+
+            const opponent = player === BLACK ? WHITE : BLACK;
+
+            for (let [dx, dy] of directions) {
+                let nx = x + dx;
+                let ny = y + dy;
+                let canFlip = false;
+
+                while (isValidPos(nx, ny)) {
+                    const piece = board[getIndex(nx, ny)];
+
+                    if (piece === EMPTY) break;
+                    if (piece === opponent) {
+                        canFlip = true;
+                    } else if (piece === player && canFlip) {
+                        return true;
+                    } else {
+                        break;
+                    }
+
+                    nx += dx;
+                    ny += dy;
+                }
+            }
+
+            return false;
+        }
+
+        // 置ける位置をすべて取得
+        function getValidMoves(player) {
+            const moves = [];
+            for (let i = 0; i < 64; i++) {
+                const [x, y] = getCoords(i);
+                if (canPlaceAt(x, y, player)) {
+                    moves.push(i);
+                }
+            }
+            return moves;
+        }
+
+        // ピースを置いてひっくり返す
+        function placeAt(x, y, player) {
+            const index = getIndex(x, y);
+            board[index] = player;
+
+            const opponent = player === BLACK ? WHITE : BLACK;
+
+            for (let [dx, dy] of directions) {
+                let nx = x + dx;
+                let ny = y + dy;
+                let toFlip = [];
+
+                while (isValidPos(nx, ny)) {
+                    const piece = board[getIndex(nx, ny)];
+
+                    if (piece === EMPTY) break;
+                    if (piece === opponent) {
+                        toFlip.push([nx, ny]);
+                    } else if (piece === player) {
+                        toFlip.forEach(([fx, fy]) => {
+                            board[getIndex(fx, fy)] = player;
+                        });
+                        break;
+                    } else {
+                        break;
+                    }
+
+                    nx += dx;
+                    ny += dy;
+                }
+            }
+        }
+
+        // スコア計算
+        function getScore() {
+            let black = 0, white = 0;
+            for (let piece of board) {
+                if (piece === BLACK) black++;
+                else if (piece === WHITE) white++;
+            }
+            return { black, white };
+        }
+
+        // ゲーム終了判定
+        function checkGameStatus() {
+            const blackMoves = getValidMoves(BLACK);
+            const whiteMoves = getValidMoves(WHITE);
+
+            if (blackMoves.length === 0 && whiteMoves.length === 0) {
+                return 'end';
+            } else if (blackMoves.length === 0) {
+                currentPlayer = WHITE;
+                return 'pass';
+            } else if (whiteMoves.length === 0) {
+                currentPlayer = BLACK;
+                return 'pass';
+            }
+
+            return 'continue';
+        }
+
+        // AIの手を決定
+        function getAIMove() {
+            const moves = getValidMoves(WHITE);
+            if (moves.length === 0) return null;
+
+            addAILog(`候補手を分析中... (${moves.length}個の選択肢)`, 'thinking');
+
+            let level = { easy: 1, normal: 2, hard: 4 }[difficulty] || 2;
+
+            let bestMove = moves[0];
+            let bestScore = -Infinity;
+            let moveEvaluations = [];
+
+            for (let move of moves) {
+                const [x, y] = getCoords(move);
+                let score = evaluateMove(x, y, WHITE, level);
+                moveEvaluations.push({ move, x, y, score });
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+
+            // スコアでソート
+            moveEvaluations.sort((a, b) => b.score - a.score);
+
+            // トップ3の候補を表示
+            const topMoves = moveEvaluations.slice(0, 3);
+            topMoves.forEach((eval, idx) => {
+                const pos = String.fromCharCode(97 + eval.x) + (eval.y + 1);
+                addAILog(`  候補#${idx + 1}: ${pos} (スコア: ${eval.score.toFixed(1)})`, 'thinking');
+            });
+
+            const [bestX, bestY] = getCoords(bestMove);
+            const bestPos = String.fromCharCode(97 + bestX) + (bestY + 1);
+            addAILog(`✓ 決定: ${bestPos} にコマを置きます`, 'decision');
+
+            return bestMove;
+        }
+
+        // 手の評価
+        function evaluateMove(x, y, player, depth) {
+            const tempBoard = board.slice();
+
+            placeAt(x, y, player);
+
+            let score = countFlips(x, y, player);
+
+            // コーナーとエッジに重み付け
+            const corners = [0, 7, 56, 63];
+            const edges = [1, 2, 3, 4, 5, 6, 8, 15, 16, 23, 24, 31, 32, 39, 40, 47, 48, 49, 50, 51, 52, 53, 54, 55];
+
+            if (corners.includes(getIndex(x, y))) score += 25;
+            else if (edges.includes(getIndex(x, y))) score += 5;
+
+            // 相手の手が少ないほどいい
+            const opponent = player === BLACK ? WHITE : BLACK;
+            score -= getValidMoves(opponent).length * 2;
+
+            board = tempBoard;
+            return score;
+        }
+
+        // ひっくり返した数を数える
+        function countFlips(x, y, player) {
+            let count = 0;
+            const opponent = player === BLACK ? WHITE : BLACK;
+
+            for (let [dx, dy] of directions) {
+                let nx = x + dx;
+                let ny = y + dy;
+
+                while (isValidPos(nx, ny)) {
+                    const piece = board[getIndex(nx, ny)];
+
+                    if (piece === EMPTY) break;
+                    if (piece === opponent) {
+                        count++;
+                    } else if (piece === player) {
+                        break;
+                    } else {
+                        break;
+                    }
+
+                    nx += dx;
+                    ny += dy;
+                }
+            }
+
+            return count;
+        }
+
+        // ボード描画
+        function drawBoard() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+
+            const validMoves = getValidMoves(currentPlayer);
+
+            for (let i = 0; i < 64; i++) {
+                const button = document.createElement('button');
+                button.className = 'cell';
+                button.id = `cell-${i}`;
+
+                const piece = board[i];
+                if (piece === BLACK || piece === WHITE) {
+                    const div = document.createElement('div');
+                    div.className = `piece ${piece === BLACK ? 'black' : 'white'}`;
+                    button.appendChild(div);
+                } else if (validMoves.includes(i) && currentPlayer === BLACK) {
+                    const div = document.createElement('div');
+                    div.className = 'piece hint';
+                    button.appendChild(div);
+                }
+
+                if (currentPlayer === BLACK) {
+                    button.onclick = () => makeMove(i);
+                    button.disabled = piece !== EMPTY || !validMoves.includes(i);
+                } else {
+                    button.disabled = true;
+                }
+
+                boardElement.appendChild(button);
+            }
+
+            updateScore();
+        }
+
+        // スコア表示更新
+        function updateScore() {
+            const { black, white } = getScore();
+            const empty = 64 - black - white;
+
+            document.getElementById('blackScore').textContent = black;
+            document.getElementById('whiteScore').textContent = white;
+            document.getElementById('emptyCount').textContent = empty;
+        }
+
+        // プレイヤーの手
+        function makeMove(index) {
+            saveGameState();
+
+            const [x, y] = getCoords(index);
+            placeAt(x, y, BLACK);
+
+            currentPlayer = WHITE;
+            updateStatus();
+            drawBoard();
+
+            setTimeout(aiTurn, 800);
+        }
+
+        // AIのターン
+        function aiTurn() {
+            const validMoves = getValidMoves(WHITE);
+
+            if (validMoves.length === 0) {
+                const blackMoves = getValidMoves(BLACK);
+                if (blackMoves.length === 0) {
+                    endGame();
+                    return;
+                }
+                currentPlayer = BLACK;
+                addAILog('AIはパスしました', 'thinking');
+                updateStatus('AIはパスしました。');
+                drawBoard();
+                return;
+            }
+
+            addAILog('--- AIのターン開始 ---', 'thinking');
+            const move = getAIMove();
+            if (move !== null) {
+                const [x, y] = getCoords(move);
+                placeAt(x, y, WHITE);
+            }
+
+            currentPlayer = BLACK;
+            const blackMoves = getValidMoves(BLACK);
+
+            if (blackMoves.length === 0) {
+                const whiteMoves = getValidMoves(WHITE);
+                if (whiteMoves.length === 0) {
+                    endGame();
+                    return;
+                }
+                currentPlayer = WHITE;
+                addAILog('プレイヤーはパスしました', 'thinking');
+                updateStatus('パスしました。AIのターンです。');
+                drawBoard();
+                setTimeout(aiTurn, 1000);
+            } else {
+                updateStatus();
+                drawBoard();
+            }
+        }
+
+        // ステータス更新
+        function updateStatus(customMessage = null) {
+            if (customMessage) {
+                document.getElementById('status').textContent = customMessage;
+                return;
+            }
+
+            if (currentPlayer === BLACK) {
+                document.getElementById('status').textContent = 'あなたのターンです (黒)';
+            } else {
+                document.getElementById('status').textContent = 'AIのターンです (白)';
+            }
+        }
+
+        // ゲーム終了
+        function endGame() {
+            gameOver = true;
+            const { black, white } = getScore();
+
+            let result = '';
+            if (black > white) {
+                result = `🎉 あなたの勝ち！ (${black} - ${white})`;
+            } else if (white > black) {
+                result = `😔 AIの勝ち！ (${white} - ${black})`;
+            } else {
+                result = `🤝 同点です！ (${black} - ${white})`;
+            }
+
+            document.getElementById('status').textContent = 'ゲーム終了';
+            document.getElementById('winnerText').textContent = result;
+            document.getElementById('finalScore').textContent = `最終スコア: 黒 ${black} - 白 ${white}`;
+
+            document.getElementById('gameOverPanel').style.display = 'block';
+            document.getElementById('board').style.opacity = '0.5';
+        }
+
+        // ゲーム開始
+        function startNewGame() {
+            difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+            initBoard();
+            gameOver = false;
+            clearAILog();
+            addAILog('新しいゲームを開始しました', 'thinking');
+            document.getElementById('gameOverPanel').style.display = 'none';
+            document.getElementById('board').style.opacity = '1';
+            updateStatus();
+            drawBoard();
+        }
+
+        // 戻る
+        function undo() {
+            if (gameHistory.length === 0) {
+                alert('戻ることができません');
+                return;
+            }
+            board = gameHistory.pop();
+            currentPlayer = BLACK;
+            updateStatus();
+            drawBoard();
+        }
+
+        // パス
+        function pass() {
+            const validMoves = getValidMoves(BLACK);
+            if (validMoves.length > 0) {
+                alert('置ける場所があります');
+                return;
+            }
+
+            saveGameState();
+            currentPlayer = WHITE;
+            updateStatus('パスしました。AIのターンです。');
+            drawBoard();
+            setTimeout(aiTurn, 800);
+        }
+
+        // ゲーム状態保存
+        function saveGameState() {
+            gameHistory.push(board.slice());
+        }
+
+        // 初期化
+        startNewGame();
+    </script>
+</body>
+</html>
